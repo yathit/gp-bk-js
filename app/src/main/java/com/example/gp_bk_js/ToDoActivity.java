@@ -315,7 +315,7 @@ public class ToDoActivity extends Activity {
     private void authenticate() {
         // Login using the Google provider.
 
-        ListenableFuture<MobileServiceUser> mLogin = mClient.login(MobileServiceAuthenticationProvider.Google);
+        ListenableFuture<MobileServiceUser> mLogin = mClient.login(MobileServiceAuthenticationProvider.WindowsAzureActiveDirectory);
 
         Futures.addCallback(mLogin, new FutureCallback<MobileServiceUser>() {
             @Override
