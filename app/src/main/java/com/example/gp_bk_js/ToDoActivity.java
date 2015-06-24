@@ -27,6 +27,24 @@ import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
 import com.microsoft.windowsazure.mobileservices.table.MobileServiceTable;
 
 import static com.microsoft.windowsazure.mobileservices.table.query.QueryOperations.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceAuthenticationProvider;
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceAuthenticationProvider;
+import com.microsoft.windowsazure.mobileservices.authentication.MobileServiceUser;
 
 public class ToDoActivity extends Activity {
 
@@ -76,18 +94,7 @@ public class ToDoActivity extends Activity {
                     "IYeJbUWIeHNxkQNijuoltIaWkOEeeb33",
                     this).withFilter(new ProgressFilter());
 
-            // Get the Mobile Service Table instance to use
-            mToDoTable = mClient.getTable(ToDoItem.class);
-
-            mTextNewToDo = (EditText) findViewById(R.id.textNewToDo);
-
-            // Create an adapter to bind the items with the view
-            mAdapter = new ToDoItemAdapter(this, R.layout.row_list_to_do);
-            ListView listViewToDo = (ListView) findViewById(R.id.listViewToDo);
-            listViewToDo.setAdapter(mAdapter);
-
-            // Load the items from the Mobile Service
-            refreshItemsFromTable();
+            authenticate();
 
         } catch (MalformedURLException e) {
             createAndShowDialog(new Exception("There was an error creating the Mobile Service. Verify the URL"), "Error");
@@ -304,4 +311,41 @@ public class ToDoActivity extends Activity {
             return resultFuture;
         }
     }
+
+    private void authenticate() {
+        // Login using the Google provider.
+
+        ListenableFuture<MobileServiceUser> mLogin = mClient.login(MobileServiceAuthenticationProvider.Google);
+
+        Futures.addCallback(mLogin, new FutureCallback<MobileServiceUser>() {
+            @Override
+            public void onFailure(Throwable exc) {
+                createAndShowDialog((Exception) exc, "Error");
+            }
+            @Override
+            public void onSuccess(MobileServiceUser user) {
+                createAndShowDialog(String.format(
+                        "You are now logged in - %1$2s",
+                        user.getUserId()), "Success");
+                createTable();
+            }
+        });
+    }
+
+    private void createTable() {
+
+        // Get the Mobile Service Table instance to use
+        mToDoTable = mClient.getTable(ToDoItem.class);
+
+        mTextNewToDo = (EditText) findViewById(R.id.textNewToDo);
+
+        // Create an adapter to bind the items with the view
+        mAdapter = new ToDoItemAdapter(this, R.layout.row_list_to_do);
+        ListView listViewToDo = (ListView) findViewById(R.id.listViewToDo);
+        listViewToDo.setAdapter(mAdapter);
+
+        // Load the items from the Mobile Service
+        refreshItemsFromTable();
+    }
+
 }
